@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import MaxWidthWrapper from '@/components/common/MaxWidthWrapper.vue'
 import { useProductsStore } from '@/stores/products'
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import ErrorCard from '@/components/products/error-card.vue'
 import { useHead } from '@vueuse/head'
+import { useCartStore } from '@/stores/cart'
 
 const props = defineProps<{
   id: string | number
@@ -15,12 +16,28 @@ const productsStore = useProductsStore()
 onMounted(async () => {
   await productsStore.fetchProduct(Number(props.id))
 })
+
+const cartStore = useCartStore()
+
+const handleAddToCart = () => {
+  if (productsStore.product) {
+    cartStore.addItem({
+      id: productsStore.product.id,
+      title: productsStore.product.title,
+      price: productsStore.product.price,
+      quantity: 1,
+      image: productsStore.product.image,
+      category: productsStore.product.category,
+    })
+  }
+}
+
 useHead({
-  title: `${productsStore.product?.title}`,
+  title: computed(() => productsStore.product?.title || 'Loading...'),
   meta: [
     {
       name: 'description',
-      content: `${productsStore.product?.description}`,
+      content: computed(() => productsStore.product?.description || 'Product details'),
     },
   ],
 })
@@ -120,7 +137,8 @@ useHead({
             </div>
             <div class="flex flex-col sm:flex-row gap-4">
               <button
-                class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                @click="handleAddToCart"
+                class="cursor-pointer flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Add to Cart
               </button>
